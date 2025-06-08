@@ -5,23 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GPS Work Report Dashboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --primary-color: #2563eb; /* Vibrant blue */
-            --secondary-color: #1e3a8a; /* Dark blue */
-            --accent-color: #db2777; /* Bright pink */
-            --light-color: #f3f4f6; /* Light gray */
-            --dark-color: #111827; /* Near black */
-            --success-color: #059669; /* Green */
-            --warning-color: #d97706; /* Amber */
-            --info-color: #2563eb; /* Blue */
-            --background-color: #e5e7eb; /* Gray background */
-            --card-bg: #ffffff; /* White cards */
-            --text-color: #1f2a44; /* Dark navy text */
-            --text-light: #6b7280; /* Gray text */
-            --border-color: #d1d5db; /* Light gray border */
+            --primary-color: #2563eb;
+            --secondary-color: #1e3a8a;
+            --accent-color: #db2777;
+            --light-color: #f3f4f6;
+            --dark-color: #111827;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --info-color: #2563eb;
+            --background-color: #e5e7eb;
+            --card-bg: #ffffff;
+            --text-color: #1f2a44;
+            --text-light: #6b7280;
+            --border-color: #d1d5db;
         }
 
         * {
@@ -58,20 +58,21 @@
         .logo-container {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 1.5rem;
         }
 
         .logo {
-            height: 40px;
+            height: 60px;
         }
 
         .company-info {
-            font-size: 0.8rem;
-            line-height: 1.5;
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.9rem;
+            line-height: 1.6;
         }
 
         .company-info strong {
-            font-weight: 600;
+            font-weight: 500;
         }
 
         .tabs {
@@ -83,10 +84,11 @@
         .tab {
             padding: 0.8rem 1.5rem;
             cursor: pointer;
+            font-family: 'Roboto', sans-serif;
             font-weight: 500;
             color: var(--text-light);
             transition: all 0.2s ease;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -100,7 +102,7 @@
         .tab.active {
             background-color: var(--card-bg);
             color: var(--primary-color);
-            font-weight: 600;
+            font-weight: 500;
             position: relative;
         }
 
@@ -170,6 +172,7 @@
             gap: 0.5rem;
             flex: 1;
             min-width: 180px;
+            position: relative;
         }
 
         .filter-label {
@@ -178,7 +181,7 @@
             font-size: 0.85rem;
         }
 
-        .date-picker, .area-select {
+        .date-picker, .area-select, .wi-input {
             padding: 0.6rem;
             font-size: 0.85rem;
             border: 1px solid var(--border-color);
@@ -189,7 +192,7 @@
             flex: 1;
         }
 
-        .date-picker:focus, .area-select:focus {
+        .date-picker:focus, .area-select:focus, .wi-input:focus {
             outline: none;
             border-color: var(--primary-color);
         }
@@ -490,7 +493,7 @@
                 width: 100%;
             }
 
-            .date-picker, .area-select {
+            .date-picker, .area-select, .wi-input {
                 width: 100%;
             }
 
@@ -599,28 +602,6 @@
                                 </tbody>
                             </table>
                         </div>
-                        
-                        <div class="chart-card">
-                            <div class="chart-title">Quick Stats</div>
-                            <div class="summary-card">
-                                <div class="summary-item">
-                                    <div class="summary-label">Total Work Items</div>
-                                    <div class="summary-value" id="totalWorkItems">0</div>
-                                </div>
-                                <div class="summary-item">
-                                    <div class="summary-label">Active Permits</div>
-                                    <div class="summary-value" id="activePermits">0</div>
-                                </div>
-                                <div class="summary-item">
-                                    <div class="summary-label">Avg. Crew Size</div>
-                                    <div class="summary-value" id="avgCrewSize">0</div>
-                                </div>
-                                <div class="summary-item">
-                                    <div class="summary-label">Total Resources</div>
-                                    <div class="summary-value" id="totalResources">0</div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -645,6 +626,10 @@
                         <option value="FRT Project">FRT Project</option>
                         <option value="Power Project">Power Project</option>
                     </select>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label"><i class="fas fa-search"></i> WI Number:</span>
+                    <input type="text" id="wiInput" class="wi-input" placeholder="Search WI number..." oninput="applyFilters()">
                 </div>
             </div>
             
@@ -808,6 +793,7 @@
         function applyFilters() {
             const selectedDate = document.getElementById('reportDate').valueAsDate;
             const selectedArea = document.getElementById('areaSelect').value;
+            const wiSearch = document.getElementById('wiInput').value.trim().toLowerCase();
             
             if (!selectedDate) return;
             
@@ -824,6 +810,11 @@
                 
                 // Area filtering
                 if (selectedArea !== 'all' && row['AREA / BLOCK'] !== selectedArea) {
+                    return false;
+                }
+                
+                // WI number filtering (partial match)
+                if (wiSearch && row['WI NO'] && !row['WI NO'].toLowerCase().includes(wiSearch)) {
                     return false;
                 }
                 
@@ -1118,11 +1109,6 @@
             const areaCrewData = {};
             const areaTrendData = {};
             const workGroupData = {};
-            const permitNumbers = new Set();
-            const uniqueWorkItems = new Set();
-            const resourceIds = new Set();
-            let totalCrewSize = 0;
-            let workItemsCount = 0;
             
             // Initialize data structures
             datesInRange.forEach(date => {
@@ -1163,7 +1149,6 @@
                 
                 if (row['RESOURCE ID']) {
                     areaCrewData[area].dates[formattedRowDate].crewSize.add(row['RESOURCE ID']);
-                    resourceIds.add(row['RESOURCE ID']);
                 }
                 
                 if (row['FOREMAN ID']) {
@@ -1182,24 +1167,12 @@
                 if (row['RESOURCE ID']) {
                     workGroupData[workGroupKey].crewSize.add(row['RESOURCE ID']);
                 }
-                
-                // Track unique permits and work items
-                if (row['PERMIT NUMBER']) {
-                    permitNumbers.add(row['PERMIT NUMBER']);
-                }
-                if (row['WI NO']) {
-                    uniqueWorkItems.add(row['WI NO']);
-                }
             });
             
             // Calculate totals and prepare trend data
             Object.keys(areaCrewData).forEach(area => {
                 Object.keys(areaCrewData[area].dates).forEach(date => {
                     const crewSize = areaCrewData[area].dates[date].crewSize.size;
-                    const foremenCount = areaCrewData[area].dates[date].foremen.size;
-                    totalCrewSize += crewSize;
-                    workItemsCount++;
-                    
                     // Prepare trend data
                     if (!areaTrendData[date][area]) {
                         areaTrendData[date][area] = 0;
@@ -1289,14 +1262,6 @@
                 borderColor: colors,
                 borderWidth: 1
             });
-            
-            // Update quick stats
-            document.getElementById('totalWorkItems').textContent = uniqueWorkItems.size;
-            document.getElementById('activePermits').textContent = permitNumbers.size;
-            document.getElementById('avgCrewSize').textContent = workItemsCount > 0 
-                ? Math.round(totalCrewSize / workItemsCount) 
-                : 'N/A';
-            document.getElementById('totalResources').textContent = resourceIds.size;
             
             // Update recent activity table - now counting unique foremen per day
             const recentActivityData = {};
