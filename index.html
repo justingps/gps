@@ -179,6 +179,7 @@
             font-weight: 500;
             color: var(--dark-color);
             font-size: 0.85rem;
+            white-space: nowrap;
         }
 
         .date-picker, .area-select, .wi-input {
@@ -490,7 +491,14 @@
             }
 
             .filter-group {
+                flex-direction: column;
+                align-items: flex-start;
                 width: 100%;
+                margin-bottom: 0.8rem;
+            }
+
+            .filter-label {
+                margin-bottom: 0.3rem;
             }
 
             .date-picker, .area-select, .wi-input {
@@ -628,8 +636,8 @@
                     </select>
                 </div>
                 <div class="filter-group">
-                    <span class="filter-label"><i class="fas fa-search"></i> WI Number:</span>
-                    <input type="text" id="wiInput" class="wi-input" placeholder="Search WI number..." oninput="applyFilters()">
+                    <span class="filter-label"><i class="fas fa-search"></i> WI:</span>
+                    <input type="text" id="wiInput" class="wi-input" placeholder="Search WI..." oninput="applyFilters()">
                 </div>
             </div>
             
