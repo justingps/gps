@@ -12,16 +12,18 @@
             --primary-color: #2563eb;
             --secondary-color: #1e3a8a;
             --accent-color: #db2777;
-            --light-color: #f3f4f6;
+            --light-color: #e0e7ff;
             --dark-color: #111827;
             --success-color: #059669;
             --warning-color: #d97706;
             --info-color: #2563eb;
             --background-color: #e5e7eb;
-            --card-bg: #ffffff;
+            --card-bg: #e5e7eb;
             --text-color: #1f2a44;
             --text-light: #6b7280;
             --border-color: #d1d5db;
+            --shadow-light: #ffffff;
+            --shadow-dark: #b0b7c3;
         }
 
         * {
@@ -41,13 +43,14 @@
             max-width: 1440px;
             margin: 1.5rem auto;
             background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 12px;
             overflow: hidden;
+            box-shadow: 6px 6px 12px var(--shadow-dark),
+                        -6px -6px 12px var(--shadow-light);
         }
 
         .header {
-            background-color: var(--primary-color);
+            background: linear-gradient(145deg, var(--primary-color), var(--secondary-color));
             color: white;
             padding: 1rem 1.5rem;
             display: flex;
@@ -63,12 +66,16 @@
 
         .logo {
             height: 60px;
+            border-radius: 8px;
         }
 
         .company-info {
             font-family: 'Roboto', sans-serif;
             font-size: 0.9rem;
             line-height: 1.6;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
         }
 
         .company-info strong {
@@ -77,8 +84,8 @@
 
         .tabs {
             display: flex;
-            background-color: var(--light-color);
-            border-bottom: 1px solid var(--border-color);
+            background-color: var(--card-bg);
+            padding: 0.5rem;
         }
 
         .tab {
@@ -92,28 +99,25 @@
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            margin: 0.3rem;
+            border-radius: 8px;
+            background: var(--card-bg);
+            box-shadow: 4px 4px 8px var(--shadow-dark),
+                        -4px -4px 8px var(--shadow-light);
         }
 
         .tab:hover {
-            background-color: var(--primary-color);
+            background: linear-gradient(145deg, var(--primary-color), var(--secondary-color));
             color: white;
+            box-shadow: inset 2px 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .tab.active {
-            background-color: var(--card-bg);
+            background: var(--card-bg);
             color: var(--primary-color);
             font-weight: 500;
-            position: relative;
-        }
-
-        .tab.active::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background-color: var(--primary-color);
+            box-shadow: inset 4px 4px 8px var(--shadow-dark),
+                        inset -4px -4px 8px var(--shadow-light);
         }
 
         .tab-content {
@@ -152,7 +156,7 @@
             transform: translateX(-50%);
             width: 50px;
             height: 2px;
-            background-color: var(--primary-color);
+            background: linear-gradient(to right, var(--primary-color), var(--accent-color));
         }
 
         .filter-container {
@@ -162,8 +166,9 @@
             margin: 1rem 0;
             padding: 1rem;
             background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: 12px;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark),
+                        inset -4px -4px 8px var(--shadow-light);
         }
 
         .filter-group {
@@ -185,17 +190,21 @@
         .date-picker, .area-select, .wi-input {
             padding: 0.6rem;
             font-size: 0.85rem;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border: none;
+            border-radius: 8px;
             background-color: var(--card-bg);
-            transition: all 0.2s ease;
             font-family: 'Inter', sans-serif;
             flex: 1;
+            box-shadow: inset 2px 2px 4px var(--shadow-dark),
+                        inset -2px -2px 4px var(--shadow-light);
+            transition: all 0.2s ease;
         }
 
         .date-picker:focus, .area-select:focus, .wi-input:focus {
             outline: none;
-            border-color: var(--primary-color);
+            box-shadow: inset 1px 1px 2px var(--shadow-dark),
+                        inset -1px -1px 2px var(--shadow-light),
+                        0 0 0 2px var(--primary-color);
         }
 
         .no-data {
@@ -204,25 +213,29 @@
             margin: 1.5rem 0;
             text-align: center;
             padding: 1.5rem;
-            border: 1px dashed var(--border-color);
-            border-radius: 6px;
+            border-radius: 8px;
             background-color: var(--card-bg);
+            box-shadow: inset 4px 4px 8px var(--shadow-dark),
+                        inset -4px -4px 8px var(--shadow-light);
         }
 
         .work-group {
             margin-bottom: 1.5rem;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: 12px;
             background-color: var(--card-bg);
+            box-shadow: 6px 6px 12px var(--shadow-dark),
+                        -6px -6px 12px var(--shadow-light);
         }
 
         .work-group-header {
-            background-color: var(--primary-color);
+            background: linear-gradient(145deg, var(--primary-color), var(--secondary-color));
             color: white;
             padding: 0.8rem 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
         }
 
         .work-group-title {
@@ -237,13 +250,14 @@
             border-radius: 12px;
             font-weight: 600;
             font-size: 0.8rem;
+            box-shadow: inset 2px 2px 4px var(--shadow-dark),
+                        inset -2px -2px 4px var(--shadow-light);
         }
 
         .work-description {
             white-space: pre-line;
             background-color: var(--card-bg);
             padding: 1rem;
-            border-bottom: 1px solid var(--border-color);
             margin: 0;
             font-size: 0.85rem;
             line-height: 1.5;
@@ -261,12 +275,10 @@
             text-align: left;
             font-weight: 600;
             font-size: 0.8rem;
-            border-bottom: 1px solid var(--border-color);
         }
 
         .resource-table td {
             padding: 0.7rem;
-            border-bottom: 1px solid var(--border-color);
             font-size: 0.8rem;
         }
 
@@ -275,21 +287,22 @@
         }
 
         .resource-table tr:hover {
-            background-color: rgba(37, 99, 235, 0.05);
+            background-color: rgba(37, 99, 235, 0.1);
         }
 
         .summary-card {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
             gap: 0.8rem;
-            margin: 1rem 0;
+            margin: 1rem;
         }
 
         .summary-item {
             background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: 8px;
             padding: 0.8rem;
+            box-shadow: 4px 4px 8px var(--shadow-dark),
+                        -4px -4px 8px var(--shadow-light);
         }
 
         .summary-label {
@@ -315,9 +328,10 @@
 
         .chart-card {
             background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: 12px;
             padding: 1rem;
+            box-shadow: 6px 6px 12px var(--shadow-dark),
+                        -6px -6px 12px var(--shadow-light);
         }
 
         .chart-title {
@@ -343,7 +357,6 @@
         .data-table th, .data-table td {
             padding: 0.7rem;
             text-align: left;
-            border-bottom: 1px solid var(--border-color);
             font-size: 0.8rem;
         }
 
@@ -354,7 +367,7 @@
         }
 
         .data-table tr:hover {
-            background-color: rgba(37, 99, 235, 0.05);
+            background-color: rgba(37, 99, 235, 0.1);
         }
 
         .status-indicator {
@@ -375,10 +388,11 @@
 
         .daily-summary {
             background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: 12px;
             padding: 1rem;
             margin-bottom: 1rem;
+            box-shadow: 6px 6px 12px var(--shadow-dark),
+                        -6px -6px 12px var(--shadow-light);
         }
 
         .daily-summary h3 {
@@ -394,10 +408,11 @@
         }
 
         .daily-summary-item {
-            background-color: var(--light-color);
+            background-color: var(--card-bg);
             padding: 0.8rem;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: 8px;
+            box-shadow: 4px 4px 8px var(--shadow-dark),
+                        -4px -4px 8px var(--shadow-light);
         }
 
         .daily-summary-area {
@@ -420,6 +435,10 @@
             justify-content: center;
             padding: 2rem;
             text-align: center;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark),
+                        inset -4px -4px 8px var(--shadow-light);
         }
 
         .loading-spinner {
@@ -454,6 +473,11 @@
             display: flex;
             align-items: center;
             gap: 0.8rem;
+            padding: 0.8rem;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: inset 4px 4px 8px var(--shadow-dark),
+                        inset -4px -4px 8px var(--shadow-light);
         }
 
         .summary-date-label {
