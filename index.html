@@ -485,6 +485,21 @@
             font-size: 0.85rem;
         }
 
+        .details-card {
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem;
+            box-shadow: 4px 4px 8px var(--shadow-dark),
+                        -4px -4px 8px var(--shadow-light);
+        }
+
+        .details-card h3 {
+            margin: 0 0 0.8rem;
+            font-size: 1rem;
+            color: var(--dark-color);
+        }
+
         @media (max-width: 1200px) {
             .summary-grid {
                 grid-template-columns: 1fr;
@@ -1087,51 +1102,55 @@
                             </div>
                         </div>
                         
-                        <h3>Progress Details</h3>
-                        <table class="progress-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Description</th>
-                                    <th>Unit</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${progressLines.map((line, index) => `
+                        <div class="details-card">
+                            <h3>Progress Details</h3>
+                            <table class="progress-table">
+                                <thead>
                                     <tr>
-                                        <td>${index + 1}</td>
-                                        <td>${line.description || '-'}</td>
-                                        <td>${line.unit || '-'}</td>
+                                        <th>#</th>
+                                        <th>Description</th>
+                                        <th>Quantity</th>
                                     </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    ${progressLines.map((line, index) => `
+                                        <tr>
+                                            <td>${index + 1}</td>
+                                            <td>${line.description || '-'}</td>
+                                            <td>${line.unit || '-'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                         
-                        <h3>Resource Details</h3>
-                        <table class="resource-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Resource ID</th>
-                                    <th>Designation</th>
-                                    <th>Type</th>
-                                    <th>Time-In</th>
-                                    <th>Time-Out</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${group.resources.map((resource, index) => `
+                        <div class="details-card">
+                            <h3>Resource Details</h3>
+                            <table class="resource-table">
+                                <thead>
                                     <tr>
-                                        <td>${index + 1}</td>
-                                        <td>${resource['RESOURCE ID']}</td>
-                                        <td>${resource['RESOURCE DESIGNATION']}</td>
-                                        <td>${resource['MANPOWER / EQUIPMENT']}</td>
-                                        <td>${resource['TIME-IN'] || '-'}</td>
-                                        <td>${resource['TIME-OUT'] || '-'}</td>
+                                        <th>#</th>
+                                        <th>Resource ID</th>
+                                        <th>Designation</th>
+                                        <th>Type</th>
+                                        <th>Time-In</th>
+                                        <th>Time-Out</th>
                                     </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    ${group.resources.map((resource, index) => `
+                                        <tr>
+                                            <td>${index + 1}</td>
+                                            <td>${resource['RESOURCE ID']}</td>
+                                            <td>${resource['RESOURCE DESIGNATION']}</td>
+                                            <td>${resource['MANPOWER / EQUIPMENT']}</td>
+                                            <td>${resource['TIME-IN'] || '-'}</td>
+                                            <td>${resource['TIME-OUT'] || '-'}</td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 `;
                 groupCounter++;
@@ -1417,61 +1436,61 @@
                         x: {
                             title: {
                                 display: true,
-                                text: 'Work Group'
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Total Crew Utilization'
-                            }
+                            text: 'Work Group'
                         }
                     },
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Total Crew Utilization'
                         }
                     }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
                 }
-            });
-        }
-        
-        function getDatesInRange(startDate, endDate) {
-            const dates = [];
-            let currentDate = new Date(startDate);
-            
-            while (currentDate <= endDate) {
-                dates.push(new Date(currentDate));
-                currentDate.setDate(currentDate.getDate() + 1);
             }
-            
-            return dates;
+        });
+    }
+
+    function getDatesInRange(startDate, endDate) {
+        const dates = [];
+        let currentDate = new Date(startDate);
+        
+        while (currentDate <= endDate) {
+            dates.push(new Date(currentDate));
+            currentDate.setDate(currentDate.getDate() + 1);
         }
         
-        function getLastNDays(n) {
-            const dates = [];
-            for (let i = n - 1; i >= 0; i--) {
-                const date = new Date();
-                date.setDate(date.getDate() - i);
-                dates.push(formatDateForComparison(date));
-            }
-            return dates;
-        }
-        
-        function parseTime(timeString) {
-            if (!timeString) return null;
-            
-            const match = timeString.match(/^(\d{1,2}):(\d{2})$/);
-            if (!match) return null;
-            
-            const hours = parseInt(match[1], 10);
-            const minutes = parseInt(match[2], 10);
-            
+        return dates;
+    }
+    
+    function getLastNDays(n) {
+        const dates = [];
+        for (let i = n - 1; i >= 0; i--) {
             const date = new Date();
-            date.setHours(hours, minutes, 0, 0);
-            return date;
+            date.setDate(date.getDate() - i);
+            dates.push(formatDateForComparison(date));
         }
-    </script>
+        return dates;
+    }
+    
+    function parseTime(timeString) {
+        if (!timeString) return null;
+        
+        const match = timeString.match(/^(\d{1,2}):(\d{2})$/);
+        if (!match) return null;
+        
+        const hours = parseInt(match[1], 10);
+        const minutes = parseInt(match[2], 10);
+        
+        const date = new Date();
+        date.setHours(hours, minutes, 0, 0);
+        return date;
+    }
+</script>
 </body>
 </html>
