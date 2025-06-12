@@ -262,12 +262,12 @@
             line-height: 1.5;
         }
 
-        .resource-table, .progress-table {
+        .resource-table, .progress-table, .status-table {
             width: 100%;
             border-collapse: collapse;
         }
 
-        .resource-table th, .progress-table th {
+        .resource-table th, .progress-table th, .status-table th {
             background-color: var(--light-color);
             color: var(--dark-color);
             padding: 0.7rem;
@@ -276,16 +276,16 @@
             font-size: 0.8rem;
         }
 
-        .resource-table td, .progress-table td {
+        .resource-table td, .progress-table td, .status-table td {
             padding: 0.7rem;
             font-size: 0.8rem;
         }
 
-        .resource-table tr:last-child td, .progress-table tr:last-child td {
+        .resource-table tr:last-child td, .progress-table tr:last-child td, .status-table tr:last-child td {
             border-bottom: none;
         }
 
-        .resource-table tr:hover, .progress-table tr:hover {
+        .resource-table tr:hover, .progress-table tr:hover, .status-table tr:hover {
             background-color: rgba(37, 99, 235, 0.1);
         }
 
@@ -594,6 +594,7 @@
         <div class="tabs">
             <div class="tab active" onclick="openTab('summary')"><i class="fas fa-chart-bar"></i> Summary</div>
             <div class="tab" onclick="openTab('reports')"><i class="fas fa-file-alt"></i> Reports</div>
+            <div class="tab" onclick="openTab('status')"><i class="fas fa-table"></i> Status</div>
         </div>
 
         <div id="summary" class="tab-content active">
@@ -705,6 +706,69 @@
                 </div>
             </div>
         </div>
+
+        <div id="status" class="tab-content">
+            <h1>Active Projects Status</h1>
+            
+            <div class="filter-container">
+                <div class="filter-group">
+                    <span class="filter-label"><i class="far fa-calendar-alt"></i> Select Date:</span>
+                    <input type="date" id="statusDate" class="date-picker" onchange="updateStatusTable()">
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label"><i class="fas fa-map-marker-alt"></i> Area/Block:</span>
+                    <select id="statusAreaSelect" class="area-select" onchange="updateStatusTable()">
+                        <option value="all">All Areas</option>
+                        <option value="Safha (Block-9)">Safha (Block-9)</option>
+                        <option value="Block-62">Block-62</option>
+                        <option value="Other">Other</option>
+                        <option value="Wadi Latham (Block-9)">Wadi Latham (Block-9)</option>
+                        <option value="Infrastructure Project">Infrastructure Project</option>
+                        <option value="Khamila (Bock-27)">Khamila (Bock-27)</option>
+                        <option value="FRT Project">FRT Project</option>
+                        <option value="Power Project">Power Project</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="statusLoading" class="loading-container">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Loading Status Data</div>
+                <div class="loading-subtext">Fetching active projects information</div>
+            </div>
+            
+            <div id="statusContent" style="display: none;">
+                <div class="details-card">
+                    <h3 id="statusTableTitle">Active Projects on [Selected Date]</h3>
+                    <div class="summary-card">
+                        <div class="summary-item">
+                            <div class="summary-label">Total Projects</div>
+                            <div id="totalProjects" class="summary-value">0</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Total Crew Size</div>
+                            <div id="totalCrewSize" class="summary-value">0</div>
+                        </div>
+                    </div>
+                    <table class="status-table">
+                        <thead>
+                            <tr>
+                                <th>SL. NO.</th>
+                                <th>ID</th>
+                                <th>CREW LEAD</th>
+                                <th>PROJECTS</th>
+                                <th>AREA</th>
+                                <th>CREW SIZE</th>
+                                <th>DISCIPLINE</th>
+                            </tr>
+                        </thead>
+                        <tbody id="statusTableBody">
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -721,6 +785,7 @@
             document.getElementById('reportDate').valueAsDate = today;
             document.getElementById('summaryStartDate').valueAsDate = oneWeekAgo;
             document.getElementById('summaryEndDate').valueAsDate = today;
+            document.getElementById('statusDate').valueAsDate = today;
             document.getElementById('currentDate').textContent = formatDateForDisplay(today);
             
             loadData();
@@ -742,6 +807,8 @@
             
             if (tabName === 'summary' && allData.length > 0) {
                 updateSummaryCharts();
+            } else if (tabName === 'status' && allData.length > 0) {
+                updateStatusTable();
             }
         }
         
@@ -756,6 +823,7 @@
         function loadData() {
             document.getElementById('summaryLoading').style.display = 'flex';
             document.getElementById('reportsLoading').style.display = 'flex';
+            document.getElementById('statusLoading').style.display = 'flex';
             
             fetch(SHEET_URL)
                 .then(response => response.text())
@@ -766,9 +834,13 @@
                     document.getElementById('summaryContent').style.display = 'block';
                     document.getElementById('reportsLoading').style.display = 'none';
                     document.getElementById('reportsContent').style.display = 'block';
+                    document.getElementById('statusLoading').style.display = 'none';
+                    document.getElementById('statusContent').style.display = 'block';
                     
                     applyFilters();
-                    
+                    if (document.getElementById('status').classList.contains('active')) {
+                        updateStatusTable();
+                    }
                     if (document.getElementById('summary').classList.contains('active')) {
                         updateSummaryCharts();
                     }
@@ -777,11 +849,15 @@
                     console.error('Error loading data:', error);
                     document.getElementById('reportContainer').innerHTML = 
                         '<p class="no-data">Error loading data. Please try again later.</p>';
+                    document.getElementById('statusTableBody').innerHTML = 
+                        '<tr><td colspan="7" class="no-data">Error loading data. Please try again later.</td></tr>';
                     
                     document.getElementById('summaryLoading').style.display = 'none';
                     document.getElementById('reportsLoading').style.display = 'none';
+                    document.getElementById('statusLoading').style.display = 'none';
                     document.getElementById('summaryContent').style.display = 'block';
                     document.getElementById('reportsContent').style.display = 'block';
+                    document.getElementById('statusContent').style.display = 'block';
                 });
         }
         
@@ -1436,61 +1512,137 @@
                         x: {
                             title: {
                                 display: true,
-                            text: 'Work Group'
+                                text: 'Work Group'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Total Crew Utilization'
+                            }
                         }
                     },
-                    y: {
-                        beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Total Crew Utilization'
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
                         }
                     }
-                },
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                    }
                 }
-            }
-        });
-    }
+            });
+        }
 
-    function getDatesInRange(startDate, endDate) {
-        const dates = [];
-        let currentDate = new Date(startDate);
-        
-        while (currentDate <= endDate) {
-            dates.push(new Date(currentDate));
-            currentDate.setDate(currentDate.getDate() + 1);
+        function updateStatusTable() {
+            const selectedDate = document.getElementById('statusDate').valueAsDate;
+            const selectedArea = document.getElementById('statusAreaSelect').value;
+            if (!selectedDate) return;
+
+            const formattedSelectedDate = formatDateForComparison(selectedDate);
+            const formattedDisplayDate = formatDateForDisplay(selectedDate);
+
+            document.getElementById('statusTableTitle').textContent = `Active Projects on ${formattedDisplayDate}`;
+
+            const filteredData = allData.filter(row => {
+                if (!row.DATE) return false;
+                const rowDate = parseSheetDate(row.DATE);
+                if (!rowDate) return false;
+                const dateMatch = formatDateForComparison(rowDate) === formattedSelectedDate;
+                const areaMatch = selectedArea === 'all' || row['AREA / BLOCK'] === selectedArea;
+                return dateMatch && areaMatch;
+            });
+
+            if (filteredData.length === 0) {
+                document.getElementById('totalProjects').textContent = '0';
+                document.getElementById('totalCrewSize').textContent = '0';
+                document.getElementById('statusTableBody').innerHTML = 
+                    '<tr><td colspan="7" class="no-data">No records found for the selected date and area.</td></tr>';
+                return;
+            }
+
+            const groupedData = {};
+            filteredData.forEach(row => {
+                const key = `${row['FOREMAN ID']}|${row['WI NO']}|${row['AREA / BLOCK']}|${row['DISCIPLINE']}`;
+                if (!groupedData[key]) {
+                    groupedData[key] = {
+                        id: row['FOREMAN ID'],
+                        crewLead: row['FOREMAN NAME'] || '-',
+                        projects: row['WI NO'],
+                        area: row['AREA / BLOCK'] || 'Unknown',
+                        discipline: row['DISCIPLINE'] || '-',
+                        resources: []
+                    };
+                }
+
+                if (row['RESOURCE ID']) {
+                    groupedData[key].resources.push({
+                        resourceId: row['RESOURCE ID']
+                    });
+                }
+            });
+
+            const statusData = Object.values(groupedData).map((group, index) => ({
+                slNo: index + 1,
+                id: group.id || '-',
+                crewLead: group.crewLead,
+                projects: group.projects || '-',
+                area: group.area,
+                crewSize: group.resources.length,
+                discipline: group.discipline
+            }));
+
+            document.getElementById('totalProjects').textContent = statusData.length;
+            document.getElementById('totalCrewSize').textContent = statusData.reduce((sum, item) => sum + item.crewSize, 0);
+
+            const statusHtml = statusData.map(item => `
+                <tr>
+                    <td>${item.slNo}</td>
+                    <td>${item.id}</td>
+                    <td>${item.crewLead}</td>
+                    <td>${item.projects}</td>
+                    <td>${item.area}</td>
+                    <td>${item.crewSize}</td>
+                    <td>${item.discipline}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('statusTableBody').innerHTML = statusHtml;
         }
         
-        return dates;
-    }
-    
-    function getLastNDays(n) {
-        const dates = [];
-        for (let i = n - 1; i >= 0; i--) {
+        function getDatesInRange(startDate, endDate) {
+            const dates = [];
+            let currentDate = new Date(startDate);
+            
+            while (currentDate <= endDate) {
+                dates.push(new Date(currentDate));
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            return dates;
+        }
+        
+        function getLastNDays(n) {
+            const dates = [];
+            for (let i = n - 1; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                dates.push(formatDateForComparison(date));
+            }
+            return dates;
+        }
+        
+        function parseTime(timeString) {
+            if (!timeString) return null;
+            
+            const match = timeString.match(/^(\d{1,2}):(\d{2})$/);
+            if (!match) return null;
+            
+            const hours = parseInt(match[1], 10);
+            const minutes = parseInt(match[2], 10);
+            
             const date = new Date();
-            date.setDate(date.getDate() - i);
-            dates.push(formatDateForComparison(date));
+            date.setHours(hours, minutes, 0, 0);
+            return date;
         }
-        return dates;
-    }
-    
-    function parseTime(timeString) {
-        if (!timeString) return null;
-        
-        const match = timeString.match(/^(\d{1,2}):(\d{2})$/);
-        if (!match) return null;
-        
-        const hours = parseInt(match[1], 10);
-        const minutes = parseInt(match[2], 10);
-        
-        const date = new Date();
-        date.setHours(hours, minutes, 0, 0);
-        return date;
-    }
-</script>
+    </script>
 </body>
 </html>
