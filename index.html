@@ -595,6 +595,7 @@
             <div class="tab active" onclick="openTab('summary')"><i class="fas fa-chart-bar"></i> Summary</div>
             <div class="tab" onclick="openTab('reports')"><i class="fas fa-file-alt"></i> Reports</div>
             <div class="tab" onclick="openTab('status')"><i class="fas fa-table"></i> Status</div>
+            <div class="tab" onclick="openTab('resource')"><i class="fas fa-users"></i> Resource</div>
         </div>
 
         <div id="summary" class="tab-content active">
@@ -769,6 +770,114 @@
                 </div>
             </div>
         </div>
+
+        <div id="resource" class="tab-content">
+            <h1>Resource Allocation</h1>
+            
+            <div class="filter-container">
+                <div class="filter-group">
+                    <span class="filter-label"><i class="far fa-calendar-alt"></i> Select Date:</span>
+                    <input type="date" id="resourceDate" class="date-picker" onchange="updateResourceTables()">
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label"><i class="fas fa-map-marker-alt"></i> Area/Block:</span>
+                    <select id="resourceAreaSelect" class="area-select" onchange="updateResourceTables()">
+                        <option value="all">All Areas</option>
+                        <option value="Safha (Block-9)">Safha (Block-9)</option>
+                        <option value="Block-62">Block-62</option>
+                        <option value="Other">Other</option>
+                        <option value="Wadi Latham (Block-9)">Wadi Latham (Block-9)</option>
+                        <option value="Infrastructure Project">Infrastructure Project</option>
+                        <option value="Khamila (Bock-27)">Khamila (Bock-27)</option>
+                        <option value="FRT Project">FRT Project</option>
+                        <option value="Power Project">Power Project</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="resourceLoading" class="loading-container">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Loading Resource Data</div>
+                <div class="loading-subtext">Fetching resource allocation details</div>
+            </div>
+            
+            <div id="resourceContent" style="display: none;">
+                <div class="details-card">
+                    <h3 id="resourceTableTitle">Resources on [Selected Date]</h3>
+                    <div class="summary-card">
+                        <div class="summary-item">
+                            <div class="summary-label">Total Manpower</div>
+                            <div id="totalManpower" class="summary-value">0</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Total Equipment</div>
+                            <div id="totalEquipment" class="summary-value">0</div>
+                        </div>
+                        <div class="summary-item">
+                            <div class="summary-label">Not Found</div>
+                            <div id="totalNotFound" class="summary-value">0</div>
+                        </div>
+                    </div>
+                    
+                    <div class="details-card">
+                        <h3>Manpower Resources</h3>
+                        <table class="resource-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Resource ID</th>
+                                    <th>Designation</th>
+                                    <th>Project (WI NO)</th>
+                                    <th>Area</th>
+                                    <th>Foreman</th>
+                                </tr>
+                            </thead>
+                            <tbody id="manpowerTableBody">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="details-card">
+                        <h3>Equipment Resources</h3>
+                        <table class="resource-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Resource ID</th>
+                                    <th>Designation</th>
+                                    <th>Project (WI NO)</th>
+                                    <th>Area</th>
+                                    <th>Foreman</th>
+                                </tr>
+                            </thead>
+                            <tbody id="equipmentTableBody">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="details-card">
+                        <h3>Not Found Resources</h3>
+                        <table class="resource-table">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Resource ID</th>
+                                    <th>Designation</th>
+                                    <th>Project (WI NO)</th>
+                                    <th>Area</th>
+                                    <th>Foreman</th>
+                                </tr>
+                            </thead>
+                            <tbody id="notFoundTableBody">
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -779,13 +888,16 @@
         
         window.onload = function() {
             const today = new Date();
-            const oneWeekAgo = new Date();
-            oneWeekAgo.setDate(today.getDate() - 7);
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            const oneWeekAgo = new Date(yesterday);
+            oneWeekAgo.setDate(yesterday.getDate() - 6); // One week range ending yesterday
             
-            document.getElementById('reportDate').valueAsDate = today;
+            document.getElementById('reportDate').valueAsDate = yesterday;
+            document.getElementById('statusDate').valueAsDate = yesterday;
+            document.getElementById('resourceDate').valueAsDate = yesterday;
             document.getElementById('summaryStartDate').valueAsDate = oneWeekAgo;
-            document.getElementById('summaryEndDate').valueAsDate = today;
-            document.getElementById('statusDate').valueAsDate = today;
+            document.getElementById('summaryEndDate').valueAsDate = yesterday;
             document.getElementById('currentDate').textContent = formatDateForDisplay(today);
             
             loadData();
@@ -809,6 +921,8 @@
                 updateSummaryCharts();
             } else if (tabName === 'status' && allData.length > 0) {
                 updateStatusTable();
+            } else if (tabName === 'resource' && allData.length > 0) {
+                updateResourceTables();
             }
         }
         
@@ -824,6 +938,7 @@
             document.getElementById('summaryLoading').style.display = 'flex';
             document.getElementById('reportsLoading').style.display = 'flex';
             document.getElementById('statusLoading').style.display = 'flex';
+            document.getElementById('resourceLoading').style.display = 'flex';
             
             fetch(SHEET_URL)
                 .then(response => response.text())
@@ -836,6 +951,8 @@
                     document.getElementById('reportsContent').style.display = 'block';
                     document.getElementById('statusLoading').style.display = 'none';
                     document.getElementById('statusContent').style.display = 'block';
+                    document.getElementById('resourceLoading').style.display = 'none';
+                    document.getElementById('resourceContent').style.display = 'block';
                     
                     applyFilters();
                     if (document.getElementById('status').classList.contains('active')) {
@@ -844,6 +961,9 @@
                     if (document.getElementById('summary').classList.contains('active')) {
                         updateSummaryCharts();
                     }
+                    if (document.getElementById('resource').classList.contains('active')) {
+                        updateResourceTables();
+                    }
                 })
                 .catch(error => {
                     console.error('Error loading data:', error);
@@ -851,13 +971,21 @@
                         '<p class="no-data">Error loading data. Please try again later.</p>';
                     document.getElementById('statusTableBody').innerHTML = 
                         '<tr><td colspan="7" class="no-data">Error loading data. Please try again later.</td></tr>';
+                    document.getElementById('manpowerTableBody').innerHTML = 
+                        '<tr><td colspan="6" class="no-data">Error loading data. Please try again later.</td></tr>';
+                    document.getElementById('equipmentTableBody').innerHTML = 
+                        '<tr><td colspan="6" class="no-data">Error loading data. Please try again later.</td></tr>';
+                    document.getElementById('notFoundTableBody').innerHTML = 
+                        '<tr><td colspan="6" class="no-data">Error loading data. Please try again later.</td></tr>';
                     
                     document.getElementById('summaryLoading').style.display = 'none';
                     document.getElementById('reportsLoading').style.display = 'none';
                     document.getElementById('statusLoading').style.display = 'none';
+                    document.getElementById('resourceLoading').style.display = 'none';
                     document.getElementById('summaryContent').style.display = 'block';
                     document.getElementById('reportsContent').style.display = 'block';
                     document.getElementById('statusContent').style.display = 'block';
+                    document.getElementById('resourceContent').style.display = 'block';
                 });
         }
         
@@ -906,42 +1034,6 @@
             return result;
         }
         
-        function applyFilters() {
-            const selectedDate = document.getElementById('reportDate').valueAsDate;
-            const selectedArea = document.getElementById('areaSelect').value;
-            const selectedDiscipline = document.getElementById('disciplineSelect').value;
-            const wiSearch = document.getElementById('wiInput').value.trim().toLowerCase();
-            
-            if (!selectedDate) return;
-            
-            const formattedSelectedDate = formatDateForComparison(selectedDate);
-            
-            const filteredData = allData.filter(row => {
-                if (!row.DATE) return false;
-                
-                const rowDate = parseSheetDate(row.DATE);
-                if (!rowDate) return false;
-                const formattedRowDate = formatDateForComparison(rowDate);
-                if (formattedRowDate !== formattedSelectedDate) return false;
-                
-                if (selectedArea !== 'all' && row['AREA / BLOCK'] !== selectedArea) {
-                    return false;
-                }
-                
-                if (selectedDiscipline !== 'all' && row['DISCIPLINE'] !== selectedDiscipline) {
-                    return false;
-                }
-                
-                if (wiSearch && row['WI NO'] && !row['WI NO'].toLowerCase().includes(wiSearch)) {
-                    return false;
-                }
-                
-                return true;
-            });
-            
-            displayData(filteredData);
-        }
-        
         function parseSheetDate(dateString) {
             if (!dateString) return null;
             
@@ -985,7 +1077,96 @@
             return `${year}-${month}-${day}`;
         }
         
-        function displayData(data) {
+        function groupDataByProject(data, dateKey, areaFilter = 'all', disciplineFilter = 'all', wiFilter = '') {
+            const grouped = {};
+            const uniqueCrewIds = new Set();
+            
+            data.forEach(row => {
+                const rowDate = parseSheetDate(row.DATE);
+                if (!rowDate) return;
+                
+                const formattedRowDate = formatDateForComparison(rowDate);
+                if (formattedRowDate !== dateKey) return;
+                
+                if (areaFilter !== 'all' && row['AREA / BLOCK'] !== areaFilter) return;
+                if (disciplineFilter !== 'all' && row['DISCIPLINE'] !== disciplineFilter) return;
+                if (wiFilter && row['WI NO'] && !row['WI NO'].toLowerCase().includes(wiFilter.toLowerCase())) return;
+                
+                const key = `${row['FOREMAN ID']}|${row['WI NO']}|${row['AREA / BLOCK']}|${row['DISCIPLINE']}`;
+                if (!grouped[key]) {
+                    grouped[key] = {
+                        id: row['FOREMAN ID'] || '-',
+                        crewLead: row['FOREMAN NAME'] || '-',
+                        projects: row['WI NO'] || '-',
+                        area: row['AREA / BLOCK'] || 'Unknown',
+                        discipline: row['DISCIPLINE'] || '-',
+                        permits: new Set(),
+                        resources: new Set(),
+                        foremen: new Set(),
+                        details: {
+                            'DESCRIPTION OF WORK': row['DESCRIPTION OF WORK'] || '',
+                            'PERMIT NUMBER': row['PERMIT NUMBER'] || '',
+                            'VALIDATION TIME': row['VALIDATION TIME'] || '',
+                            'SUSPENSION TIME': row['SUSPENSION TIME'] || '',
+                            'PROGRESS': row['PROGRESS'] || ''
+                        },
+                        resourceDetails: []
+                    };
+                }
+                
+                if (row['PERMIT NUMBER']) {
+                    grouped[key].permits.add(row['PERMIT NUMBER']);
+                }
+                
+                if (row['RESOURCE ID']) {
+                    grouped[key].resources.add(row['RESOURCE ID']);
+                    uniqueCrewIds.add(row['RESOURCE ID']);
+                    grouped[key].resourceDetails.push({
+                        'RESOURCE ID': row['RESOURCE ID'],
+                        'RESOURCE DESIGNATION': row['RESOURCE DESIGNATION'] || '-',
+                        'MANPOWER / EQUIPMENT': row['MANPOWER / EQUIPMENT'] || '',
+                        'TIME-IN': row['TIME-IN'] || '-',
+                        'TIME-OUT': row['TIME-OUT'] || '-'
+                    });
+                }
+                
+                if (row['FOREMAN ID']) {
+                    grouped[key].foremen.add(row['FOREMAN ID']);
+                }
+            });
+            
+            return { grouped, totalCrewSize: uniqueCrewIds.size };
+        }
+        
+        function applyFilters() {
+            const selectedDate = document.getElementById('reportDate').valueAsDate;
+            const selectedArea = document.getElementById('areaSelect').value;
+            const selectedDiscipline = document.getElementById('disciplineSelect').value;
+            const wiSearch = document.getElementById('wiInput').value.trim();
+            
+            if (!selectedDate) return;
+            
+            const formattedSelectedDate = formatDateForComparison(selectedDate);
+            
+            const filteredData = allData.filter(row => {
+                if (!row.DATE) return false;
+                
+                const rowDate = parseSheetDate(row.DATE);
+                if (!rowDate) return false;
+                const formattedRowDate = formatDateForComparison(rowDate);
+                if (formattedRowDate !== formattedSelectedDate) return false;
+                
+                if (selectedArea !== 'all' && row['AREA / BLOCK'] !== selectedArea) return false;
+                if (selectedDiscipline !== 'all' && row['DISCIPLINE'] !== selectedDiscipline) return false;
+                if (wiSearch && row['WI NO'] && !row['WI NO'].toLowerCase().includes(wiSearch.toLowerCase())) return false;
+                
+                return true;
+            });
+            
+            displayData(filteredData, formattedSelectedDate, selectedArea, selectedDiscipline, wiSearch);
+        }
+        
+        function displayData(data, dateKey, selectedArea, selectedDiscipline, wiSearch) {
             const container = document.getElementById('reportContainer');
             const summaryContainer = document.getElementById('dailySummaryContainer');
             
@@ -995,12 +1176,11 @@
                 return;
             }
             
-            const areaSummary = {};
-            const selectedDate = document.getElementById('reportDate').valueAsDate;
-            const formattedDate = formatDateForDisplay(selectedDate);
+            const { grouped, totalCrewSize } = groupDataByProject(data, dateKey, selectedArea, selectedDiscipline, wiSearch);
             
-            data.forEach(row => {
-                const area = row['AREA / BLOCK'] || 'Unknown';
+            const areaSummary = {};
+            Object.values(grouped).forEach(group => {
+                const area = group.area;
                 if (!areaSummary[area]) {
                     areaSummary[area] = {
                         permits: new Set(),
@@ -1009,18 +1189,13 @@
                     };
                 }
                 
-                if (row['PERMIT NUMBER']) {
-                    areaSummary[area].permits.add(row['PERMIT NUMBER']);
-                }
-                
-                if (row['RESOURCE ID']) {
-                    areaSummary[area].crewSize.add(row['RESOURCE ID']);
-                }
-                
-                if (row['FOREMAN ID']) {
-                    areaSummary[area].foremen.add(row['FOREMAN ID']);
-                }
+                group.permits.forEach(permit => areaSummary[area].permits.add(permit));
+                group.resources.forEach(crew => areaSummary[area].crewSize.add(crew));
+                group.foremen.forEach(foreman => areaSummary[area].foremen.add(foreman));
             });
+            
+            const selectedDate = document.getElementById('reportDate').valueAsDate;
+            const formattedDate = formatDateForDisplay(selectedDate);
             
             let summaryHtml = `
                 <h3>Daily Summary for ${formattedDate}</h3>
@@ -1050,7 +1225,6 @@
             });
             
             const totalPermits = Object.values(areaSummary).reduce((sum, area) => sum + area.permits.size, 0);
-            const totalCrew = Object.values(areaSummary).reduce((sum, area) => sum + area.crewSize.size, 0);
             const totalForemen = Object.values(areaSummary).reduce((sum, area) => sum + area.foremen.size, 0);
             
             summaryHtml += `
@@ -1063,7 +1237,7 @@
                             </div>
                             <div>
                                 <div class="summary-label">Crew Size</div>
-                                <div class="summary-value">${totalCrew}</div>
+                                <div class="summary-value">${totalCrewSize}</div>
                             </div>
                             <div>
                                 <div class="summary-label">Foremen</div>
@@ -1076,54 +1250,17 @@
             
             summaryContainer.innerHTML = summaryHtml;
             
-            const groupedData = {};
-            data.forEach(row => {
-                const key = `${row['DESCRIPTION OF WORK']}|${row['PERMIT NUMBER']}|${row['WI NO']}|${row['FOREMAN ID']}|${row['FOREMAN NAME'] || 'Unknown'}|${row['DISCIPLINE']}|${row['PROGRESS']}`;
-                if (!groupedData[key]) {
-                    groupedData[key] = {
-                        details: {
-                            'FOREMAN ID': row['FOREMAN ID'],
-                            'FOREMAN NAME': row['FOREMAN NAME'] || 'Unknown',
-                            'WI NO': row['WI NO'],
-                            'AREA / BLOCK': row['AREA / BLOCK'],
-                            'DESCRIPTION OF WORK': row['DESCRIPTION OF WORK'],
-                            'PERMIT NUMBER': row['PERMIT NUMBER'],
-                            'VALIDATION TIME': row['VALIDATION TIME'],
-                            'SUSPENSION TIME': row['SUSPENSION TIME'],
-                            'DISCIPLINE': row['DISCIPLINE'],
-                            'PROGRESS': row['PROGRESS']
-                        },
-                        resources: []
-                    };
-                }
-                
-                groupedData[key].resources.push({
-                    'RESOURCE ID': row['RESOURCE ID'],
-                    'RESOURCE DESIGNATION': row['RESOURCE DESIGNATION'] || '-',
-                    'MANPOWER / EQUIPMENT': row['MANPOWER / EQUIPMENT'] || '-',
-                    'TIME-IN': row['TIME-IN'],
-                    'TIME-OUT': row['TIME-OUT']
-                });
-            });
-            
             let html = '';
             let groupCounter = 1;
             
-            Object.values(groupedData).forEach(group => {
-                const manpowerCount = group.resources.filter(r => 
-                    r['MANPOWER / EQUIPMENT'] && 
+            Object.values(grouped).forEach(group => {
+                const manpowerCount = group.resourceDetails.filter(r => 
                     r['MANPOWER / EQUIPMENT'].toLowerCase() === 'manpower'
                 ).length;
                 
-                const equipmentCount = group.resources.filter(r => 
-                    r['MANPOWER / EQUIPMENT'] && 
+                const equipmentCount = group.resourceDetails.filter(r => 
                     r['MANPOWER / EQUIPMENT'].toLowerCase() === 'equipment'
                 ).length;
-                
-                const uniqueCrew = new Set(group.resources.map(r => r['RESOURCE ID']));
-                
-                const foreman = group.resources.find(r => r['RESOURCE ID'] === group.details['FOREMAN ID']) || 
-                               group.resources[0];
                 
                 const progressLines = group.details['PROGRESS'].replace(/"/g, '').split('\n').map(line => {
                     const [description, unit] = line.split(' = ');
@@ -1134,7 +1271,7 @@
                     <div class="work-group">
                         <div class="work-group-header">
                             <span class="work-group-title">Work Progress Report - Group #${groupCounter}</span>
-                            <span class="work-group-id">WI NO: ${group.details['WI NO']}</span>
+                            <span class="work-group-id">WI NO: ${group.projects}</span>
                         </div>
                         
                         <div class="work-description">${group.details['DESCRIPTION OF WORK'].replace(/"/g, '')}</div>
@@ -1142,15 +1279,15 @@
                         <div class="summary-card">
                             <div class="summary-item">
                                 <div class="summary-label">Foreman ID</div>
-                                <div class="summary-value">${group.details['FOREMAN ID']}</div>
+                                <div class="summary-value">${group.id}</div>
                             </div>
                             <div class="summary-item">
                                 <div class="summary-label">Foreman Name</div>
-                                <div class="summary-value">${group.details['FOREMAN NAME']}</div>
+                                <div class="summary-value">${group.crewLead}</div>
                             </div>
                             <div class="summary-item">
                                 <div class="summary-label">Area/Block</div>
-                                <div class="summary-value">${group.details['AREA / BLOCK']}</div>
+                                <div class="summary-value">${group.area}</div>
                             </div>
                             <div class="summary-item">
                                 <div class="summary-label">Permit Number</div>
@@ -1170,11 +1307,11 @@
                             </div>
                             <div class="summary-item">
                                 <div class="summary-label">Crew Size</div>
-                                <div class="summary-value">${uniqueCrew.size}</div>
+                                <div class="summary-value">${group.resources.size}</div>
                             </div>
                             <div class="summary-item">
                                 <div class="summary-label">Discipline</div>
-                                <div class="summary-value">${group.details['DISCIPLINE']}</div>
+                                <div class="summary-value">${group.discipline}</div>
                             </div>
                         </div>
                         
@@ -1214,14 +1351,14 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    ${group.resources.map((resource, index) => `
+                                    ${group.resourceDetails.map((resource, index) => `
                                         <tr>
                                             <td>${index + 1}</td>
                                             <td>${resource['RESOURCE ID']}</td>
                                             <td>${resource['RESOURCE DESIGNATION']}</td>
                                             <td>${resource['MANPOWER / EQUIPMENT']}</td>
-                                            <td>${resource['TIME-IN'] || '-'}</td>
-                                            <td>${resource['TIME-OUT'] || '-'}</td>
+                                            <td>${resource['TIME-IN']}</td>
+                                            <td>${resource['TIME-OUT']}</td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -1247,67 +1384,62 @@
             const areaCrewData = {};
             const areaTrendData = {};
             const workGroupData = {};
+            const recentActivityData = {};
             
             datesInRange.forEach(date => {
                 const dateKey = formatDateForComparison(date);
                 areaTrendData[dateKey] = {};
-            });
-            
-            allData.forEach(row => {
-                const rowDate = parseSheetDate(row.DATE);
-                if (!rowDate) return;
+                recentActivityData[dateKey] = {
+                    date: dateKey,
+                    foremen: new Set(),
+                    crewSize: new Set(),
+                    active: false
+                };
                 
-                const formattedRowDate = formatDateForComparison(rowDate);
-                const formattedDisplayDate = formatDateForDisplay(rowDate);
+                const { grouped } = groupDataByProject(allData, dateKey);
                 
-                if (rowDate < startDate || rowDate > endDate) return;
-                
-                const area = row['AREA / BLOCK'] || 'Unknown';
-                const workGroupKey = `${row['WI NO']} - ${row['AREA / BLOCK'] || 'Unknown'}`;
-                
-                if (!areaCrewData[area]) {
-                    areaCrewData[area] = {
-                        totalCrew: 0,
-                        dates: {},
-                        foremen: new Set()
-                    };
-                }
-                
-                if (!areaCrewData[area].dates[formattedRowDate]) {
-                    areaCrewData[area].dates[formattedRowDate] = {
-                        crewSize: new Set(),
-                        foremen: new Set()
-                    };
-                }
-                
-                if (row['RESOURCE ID']) {
-                    areaCrewData[area].dates[formattedRowDate].crewSize.add(row['RESOURCE ID']);
-                }
-                
-                if (row['FOREMAN ID']) {
-                    areaCrewData[area].dates[formattedRowDate].foremen.add(row['FOREMAN ID']);
-                    areaCrewData[area].foremen.add(row['FOREMAN ID']);
-                }
-                
-                if (!workGroupData[workGroupKey]) {
-                    workGroupData[workGroupKey] = {
-                        crewSize: new Set(),
-                        area: row['AREA / BLOCK'] || 'Unknown',
-                        wiNo: row['WI NO']
-                    };
-                }
-                if (row['RESOURCE ID']) {
-                    workGroupData[workGroupKey].crewSize.add(row['RESOURCE ID']);
-                }
-            });
-            
-            Object.keys(areaCrewData).forEach(area => {
-                Object.keys(areaCrewData[area].dates).forEach(date => {
-                    const crewSize = areaCrewData[area].dates[date].crewSize.size;
-                    if (!areaTrendData[date][area]) {
-                        areaTrendData[date][area] = 0;
+                Object.values(grouped).forEach(group => {
+                    const area = group.area;
+                    if (!areaCrewData[area]) {
+                        areaCrewData[area] = {
+                            totalCrew: 0,
+                            dates: {},
+                            foremen: new Set()
+                        };
                     }
-                    areaTrendData[date][area] += crewSize;
+                    if (!areaCrewData[area].dates[dateKey]) {
+                        areaCrewData[area].dates[dateKey] = {
+                            crewSize: new Set(),
+                            foremen: new Set()
+                        };
+                    }
+                    
+                    group.resources.forEach(crew => {
+                        areaCrewData[area].dates[dateKey].crewSize.add(crew);
+                        recentActivityData[dateKey].crewSize.add(crew);
+                    });
+                    group.foremen.forEach(foreman => {
+                        areaCrewData[area].dates[dateKey].foremen.add(foreman);
+                        areaCrewData[area].foremen.add(foreman);
+                        recentActivityData[dateKey].foremen.add(foreman);
+                    });
+                    
+                    if (!areaTrendData[dateKey][area]) {
+                        areaTrendData[dateKey][area] = 0;
+                    }
+                    areaTrendData[dateKey][area] += group.resources.size;
+                    
+                    const workGroupKey = `${group.projects} - ${area}`;
+                    if (!workGroupData[workGroupKey]) {
+                        workGroupData[workGroupKey] = {
+                            crewSize: new Set(),
+                            area: area,
+                            wiNo: group.projects
+                        };
+                    }
+                    group.resources.forEach(crew => workGroupData[workGroupKey].crewSize.add(crew));
+                    
+                    recentActivityData[dateKey].active = true;
                 });
             });
             
@@ -1386,34 +1518,6 @@
                 backgroundColor: colors,
                 borderColor: colors,
                 borderWidth: 1
-            });
-            
-            const recentActivityData = {};
-            datesInRange.forEach(date => {
-                const dateKey = formatDateForComparison(date);
-                recentActivityData[dateKey] = {
-                    date: dateKey,
-                    foremen: new Set(),
-                    crewSize: new Set(),
-                    active: false
-                };
-            });
-            
-            allData.forEach(row => {
-                const rowDate = parseSheetDate(row.DATE);
-                if (!rowDate) return;
-                
-                const dateKey = formatDateForComparison(rowDate);
-                
-                if (recentActivityData[dateKey]) {
-                    if (row['FOREMAN ID']) {
-                        recentActivityData[dateKey].foremen.add(row['FOREMAN ID']);
-                    }
-                    if (row['RESOURCE ID']) {
-                        recentActivityData[dateKey].crewSize.add(row['RESOURCE ID']);
-                    }
-                    recentActivityData[dateKey].active = true;
-                }
             });
             
             const recentActivityHtml = Object.values(recentActivityData)
@@ -1542,16 +1646,9 @@
 
             document.getElementById('statusTableTitle').textContent = `Active Projects on ${formattedDisplayDate}`;
 
-            const filteredData = allData.filter(row => {
-                if (!row.DATE) return false;
-                const rowDate = parseSheetDate(row.DATE);
-                if (!rowDate) return false;
-                const dateMatch = formatDateForComparison(rowDate) === formattedSelectedDate;
-                const areaMatch = selectedArea === 'all' || row['AREA / BLOCK'] === selectedArea;
-                return dateMatch && areaMatch;
-            });
+            const { grouped, totalCrewSize } = groupDataByProject(allData, formattedSelectedDate, selectedArea);
 
-            if (filteredData.length === 0) {
+            if (Object.keys(grouped).length === 0) {
                 document.getElementById('totalProjects').textContent = '0';
                 document.getElementById('totalCrewSize').textContent = '0';
                 document.getElementById('statusTableBody').innerHTML = 
@@ -1559,39 +1656,18 @@
                 return;
             }
 
-            const groupedData = {};
-            filteredData.forEach(row => {
-                const key = `${row['FOREMAN ID']}|${row['WI NO']}|${row['AREA / BLOCK']}|${row['DISCIPLINE']}`;
-                if (!groupedData[key]) {
-                    groupedData[key] = {
-                        id: row['FOREMAN ID'],
-                        crewLead: row['FOREMAN NAME'] || '-',
-                        projects: row['WI NO'],
-                        area: row['AREA / BLOCK'] || 'Unknown',
-                        discipline: row['DISCIPLINE'] || '-',
-                        resources: []
-                    };
-                }
-
-                if (row['RESOURCE ID']) {
-                    groupedData[key].resources.push({
-                        resourceId: row['RESOURCE ID']
-                    });
-                }
-            });
-
-            const statusData = Object.values(groupedData).map((group, index) => ({
+            const statusData = Object.values(grouped).map((group, index) => ({
                 slNo: index + 1,
-                id: group.id || '-',
+                id: group.id,
                 crewLead: group.crewLead,
-                projects: group.projects || '-',
+                projects: group.projects,
                 area: group.area,
-                crewSize: group.resources.length,
+                crewSize: group.resources.size,
                 discipline: group.discipline
             }));
 
             document.getElementById('totalProjects').textContent = statusData.length;
-            document.getElementById('totalCrewSize').textContent = statusData.reduce((sum, item) => sum + item.crewSize, 0);
+            document.getElementById('totalCrewSize').textContent = totalCrewSize;
 
             const statusHtml = statusData.map(item => `
                 <tr>
@@ -1606,6 +1682,107 @@
             `).join('');
 
             document.getElementById('statusTableBody').innerHTML = statusHtml;
+        }
+        
+        function updateResourceTables() {
+            const selectedDate = document.getElementById('resourceDate').valueAsDate;
+            const selectedArea = document.getElementById('resourceAreaSelect').value;
+            if (!selectedDate) return;
+
+            const formattedSelectedDate = formatDateForComparison(selectedDate);
+            const formattedDisplayDate = formatDateForDisplay(selectedDate);
+
+            document.getElementById('resourceTableTitle').textContent = `Resources on ${formattedDisplayDate}`;
+
+            const { grouped } = groupDataByProject(allData, formattedSelectedDate, selectedArea);
+
+            if (Object.keys(grouped).length === 0) {
+                document.getElementById('totalManpower').textContent = '0';
+                document.getElementById('totalEquipment').textContent = '0';
+                document.getElementById('totalNotFound').textContent = '0';
+                document.getElementById('manpowerTableBody').innerHTML = 
+                    '<tr><td colspan="6" class="no-data">No manpower records found.</td></tr>';
+                document.getElementById('equipmentTableBody').innerHTML = 
+                    '<tr><td colspan="6" class="no-data">No equipment records found.</td></tr>';
+                document.getElementById('notFoundTableBody').innerHTML = 
+                    '<tr><td colspan="6" class="no-data">No not found records found.</td></tr>';
+                return;
+            }
+
+            let manpowerResources = [];
+            let equipmentResources = [];
+            let notFoundResources = [];
+            let manpowerCount = 0;
+            let equipmentCount = 0;
+            let notFoundCount = 0;
+
+            Object.values(grouped).forEach(group => {
+                group.resourceDetails.forEach(resource => {
+                    const resourceEntry = {
+                        resourceId: resource['RESOURCE ID'],
+                        designation: resource['RESOURCE DESIGNATION'],
+                        project: group.projects,
+                        area: group.area,
+                        foreman: group.crewLead
+                    };
+
+                    const type = resource['MANPOWER / EQUIPMENT'].toLowerCase();
+                    if (type === 'manpower') {
+                        manpowerResources.push(resourceEntry);
+                        manpowerCount++;
+                    } else if (type === 'equipment') {
+                        equipmentResources.push(resourceEntry);
+                        equipmentCount++;
+                    } else {
+                        notFoundResources.push(resourceEntry);
+                        notFoundCount++;
+                    }
+                });
+            });
+
+            document.getElementById('totalManpower').textContent = manpowerCount;
+            document.getElementById('totalEquipment').textContent = equipmentCount;
+            document.getElementById('totalNotFound').textContent = notFoundCount;
+
+            const manpowerHtml = manpowerResources.map((resource, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${resource.resourceId}</td>
+                    <td>${resource.designation}</td>
+                    <td>${resource.project}</td>
+                    <td>${resource.area}</td>
+                    <td>${resource.foreman}</td>
+                </tr>
+            `).join('');
+
+            const equipmentHtml = equipmentResources.map((resource, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${resource.resourceId}</td>
+                    <td>${resource.designation}</td>
+                    <td>${resource.project}</td>
+                    <td>${resource.area}</td>
+                    <td>${resource.foreman}</td>
+                </tr>
+            `).join('');
+
+            const notFoundHtml = notFoundResources.map((resource, index) => `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td>${resource.resourceId}</td>
+                    <td>${resource.designation}</td>
+                    <td>${resource.project}</td>
+                    <td>${resource.area}</td>
+                    <td>${resource.foreman}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('manpowerTableBody').innerHTML = manpowerHtml || 
+                '<tr><td colspan="6" class="no-data">No manpower records found.</td></tr>';
+            document.getElementById('equipmentTableBody').innerHTML = equipmentHtml || 
+                '<tr><td colspan="6" class="no-data">No equipment records found.</td></tr>';
+            document.getElementById('notFoundTableBody').innerHTML = notFoundHtml || 
+                '<tr><td colspan="6" class="no-data">No not found records found.</td></tr>';
         }
         
         function getDatesInRange(startDate, endDate) {
