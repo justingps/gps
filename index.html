@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPS Dashboard</title>
+    <title>GPS</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
     <style>
         :root {
             --primary-color: #2563eb;
@@ -500,6 +501,51 @@
             color: var(--dark-color);
         }
 
+        /* Heatmap specific styles */
+        .heatmap-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .heatmap-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 6px 6px 12px var(--shadow-dark),
+                        -6px -6px 12px var(--shadow-light);
+        }
+
+        .heatmap-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            color: var(--dark-color);
+            text-align: center;
+        }
+
+        .heatmap-legend {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 1rem;
+            gap: 0.5rem;
+        }
+
+        .heatmap-legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-color);
+        }
+
+        .heatmap-legend-color {
+            width: 20px;
+            height: 20px;
+            margin-right: 0.3rem;
+            border-radius: 4px;
+        }
+
         @media (max-width: 1200px) {
             .summary-grid {
                 grid-template-columns: 1fr;
@@ -596,6 +642,7 @@
             <div class="tab" onclick="openTab('reports')"><i class="fas fa-file-alt"></i> Reports</div>
             <div class="tab" onclick="openTab('status')"><i class="fas fa-table"></i> Status</div>
             <div class="tab" onclick="openTab('resource')"><i class="fas fa-users"></i> Resource</div>
+            <div class="tab" onclick="openTab('heatmap')"><i class="fas fa-fire"></i> Crew Heatmap</div>
         </div>
 
         <div id="summary" class="tab-content active">
@@ -878,6 +925,77 @@
                 </div>
             </div>
         </div>
+
+        <!-- New Heatmap Tab Content -->
+        <div id="heatmap" class="tab-content">
+            <h1>Crew Size Heatmap by Project</h1>
+            
+            <div class="filter-container">
+                <div class="filter-group">
+                    <span class="filter-label"><i class="far fa-calendar-alt"></i> Start Date:</span>
+                    <input type="date" id="heatmapStartDate" class="date-picker" onchange="updateHeatmap()">
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label"><i class="far fa-calendar-alt"></i> End Date:</span>
+                    <input type="date" id="heatmapEndDate" class="date-picker" onchange="updateHeatmap()">
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label"><i class="fas fa-map-marker-alt"></i> Area/Block:</span>
+                    <select id="heatmapAreaSelect" class="area-select" onchange="updateHeatmap()">
+                        <option value="all">All Areas</option>
+                        <option value="Safha (Block-9)">Safha (Block-9)</option>
+                        <option value="Block-62">Block-62</option>
+                        <option value="Other">Other</option>
+                        <option value="Wadi Latham (Block-9)">Wadi Latham (Block-9)</option>
+                        <option value="Infrastructure Project">Infrastructure Project</option>
+                        <option value="Khamila (Bock-27)">Khamila (Bock-27)</option>
+                        <option value="FRT Project">FRT Project</option>
+                        <option value="Power Project">Power Project</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div id="heatmapLoading" class="loading-container">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Loading Heatmap Data</div>
+                <div class="loading-subtext">Analyzing crew size distribution across projects</div>
+            </div>
+            
+            <div id="heatmapContent" style="display: none;">
+                <div class="heatmap-card">
+                    <div class="heatmap-title">Crew Size Heatmap by Project (WI NO)</div>
+                    <div class="heatmap-container">
+                        <canvas id="crewHeatmapChart"></canvas>
+                    </div>
+                    <div class="heatmap-legend">
+                        <div class="heatmap-legend-item">
+                            <div class="heatmap-legend-color" style="background-color: #f0f9ff;"></div>
+                            <span>0</span>
+                        </div>
+                        <div class="heatmap-legend-item">
+                            <div class="heatmap-legend-color" style="background-color: #bae6fd;"></div>
+                            <span>1-5</span>
+                        </div>
+                        <div class="heatmap-legend-item">
+                            <div class="heatmap-legend-color" style="background-color: #7dd3fc;"></div>
+                            <span>6-10</span>
+                        </div>
+                        <div class="heatmap-legend-item">
+                            <div class="heatmap-legend-color" style="background-color: #38bdf8;"></div>
+                            <span>11-15</span>
+                        </div>
+                        <div class="heatmap-legend-item">
+                            <div class="heatmap-legend-color" style="background-color: #0ea5e9;"></div>
+                            <span>16-20</span>
+                        </div>
+                        <div class="heatmap-legend-item">
+                            <div class="heatmap-legend-color" style="background-color: #0284c7;"></div>
+                            <span>21+</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -898,6 +1016,8 @@
             document.getElementById('resourceDate').valueAsDate = yesterday;
             document.getElementById('summaryStartDate').valueAsDate = oneWeekAgo;
             document.getElementById('summaryEndDate').valueAsDate = yesterday;
+            document.getElementById('heatmapStartDate').valueAsDate = oneWeekAgo;
+            document.getElementById('heatmapEndDate').valueAsDate = yesterday;
             document.getElementById('currentDate').textContent = formatDateForDisplay(today);
             
             loadData();
@@ -923,6 +1043,8 @@
                 updateStatusTable();
             } else if (tabName === 'resource' && allData.length > 0) {
                 updateResourceTables();
+            } else if (tabName === 'heatmap' && allData.length > 0) {
+                updateHeatmap();
             }
         }
         
@@ -939,6 +1061,7 @@
             document.getElementById('reportsLoading').style.display = 'flex';
             document.getElementById('statusLoading').style.display = 'flex';
             document.getElementById('resourceLoading').style.display = 'flex';
+            document.getElementById('heatmapLoading').style.display = 'flex';
             
             fetch(SHEET_URL)
                 .then(response => response.text())
@@ -953,6 +1076,8 @@
                     document.getElementById('statusContent').style.display = 'block';
                     document.getElementById('resourceLoading').style.display = 'none';
                     document.getElementById('resourceContent').style.display = 'block';
+                    document.getElementById('heatmapLoading').style.display = 'none';
+                    document.getElementById('heatmapContent').style.display = 'block';
                     
                     applyFilters();
                     if (document.getElementById('status').classList.contains('active')) {
@@ -963,6 +1088,9 @@
                     }
                     if (document.getElementById('resource').classList.contains('active')) {
                         updateResourceTables();
+                    }
+                    if (document.getElementById('heatmap').classList.contains('active')) {
+                        updateHeatmap();
                     }
                 })
                 .catch(error => {
@@ -982,10 +1110,12 @@
                     document.getElementById('reportsLoading').style.display = 'none';
                     document.getElementById('statusLoading').style.display = 'none';
                     document.getElementById('resourceLoading').style.display = 'none';
+                    document.getElementById('heatmapLoading').style.display = 'none';
                     document.getElementById('summaryContent').style.display = 'block';
                     document.getElementById('reportsContent').style.display = 'block';
                     document.getElementById('statusContent').style.display = 'block';
                     document.getElementById('resourceContent').style.display = 'block';
+                    document.getElementById('heatmapContent').style.display = 'block';
                 });
         }
         
@@ -1783,6 +1913,121 @@
                 '<tr><td colspan="6" class="no-data">No equipment records found.</td></tr>';
             document.getElementById('notFoundTableBody').innerHTML = notFoundHtml || 
                 '<tr><td colspan="6" class="no-data">No not found records found.</td></tr>';
+        }
+        
+        function updateHeatmap() {
+            const startDate = document.getElementById('heatmapStartDate').valueAsDate;
+            const endDate = document.getElementById('heatmapEndDate').valueAsDate;
+            const selectedArea = document.getElementById('heatmapAreaSelect').value;
+            
+            if (!startDate || !endDate) return;
+            
+            const datesInRange = getDatesInRange(startDate, endDate);
+            const projectCrewData = {};
+            
+            // Collect data for all dates in range
+            datesInRange.forEach(date => {
+                const dateKey = formatDateForComparison(date);
+                const { grouped } = groupDataByProject(allData, dateKey, selectedArea);
+                
+                Object.values(grouped).forEach(group => {
+                    const projectKey = group.projects;
+                    if (!projectKey) return;
+                    
+                    if (!projectCrewData[projectKey]) {
+                        projectCrewData[projectKey] = {
+                            crewSize: 0,
+                            area: group.area,
+                            discipline: group.discipline
+                        };
+                    }
+                    
+                    // Sum crew size across all dates
+                    projectCrewData[projectKey].crewSize += group.resources.size;
+                });
+            });
+            
+            // Prepare data for heatmap
+            const projects = Object.keys(projectCrewData);
+            
+            if (projects.length === 0) {
+                document.getElementById('heatmapContent').innerHTML = '<p class="no-data">No records found for the selected date range and area.</p>';
+                return;
+            }
+            
+            // Sort projects by crew size (descending)
+            projects.sort((a, b) => projectCrewData[b].crewSize - projectCrewData[a].crewSize);
+            
+            // Limit to top 20 projects for better visualization
+            const topProjects = projects.slice(0, 20);
+            
+            // Prepare data for chart
+            const data = {
+                labels: topProjects,
+                datasets: [{
+                    label: 'Crew Size',
+                    data: topProjects.map(project => projectCrewData[project].crewSize),
+                    backgroundColor: topProjects.map(project => {
+                        const crewSize = projectCrewData[project].crewSize;
+                        if (crewSize === 0) return '#f0f9ff';
+                        if (crewSize <= 5) return '#bae6fd';
+                        if (crewSize <= 10) return '#7dd3fc';
+                        if (crewSize <= 15) return '#38bdf8';
+                        if (crewSize <= 20) return '#0ea5e9';
+                        return '#0284c7';
+                    }),
+                    borderColor: '#e5e7eb',
+                    borderWidth: 1
+                }]
+            };
+            
+            // Destroy previous chart if exists
+            if (charts.crewHeatmapChart) {
+                charts.crewHeatmapChart.destroy();
+            }
+            
+            // Create new chart
+            const ctx = document.getElementById('crewHeatmapChart').getContext('2d');
+            charts.crewHeatmapChart = new Chart(ctx, {
+                type: 'bar',
+                data: data,
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const project = context.label;
+                                    const info = projectCrewData[project];
+                                    return `Area: ${info.area}\nDiscipline: ${info.discipline}`;
+                                }
+                            }
+                        },
+                        datalabels: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Cumulative Crew Size'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Project (WI NO)'
+                            }
+                        }
+                    }
+                },
+                plugins: [ChartDataLabels]
+            });
         }
         
         function getDatesInRange(startDate, endDate) {
